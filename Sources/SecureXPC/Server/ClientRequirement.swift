@@ -377,6 +377,13 @@ private func expandSandboxIfNecessary(message: xpc_object_t) throws {
         var isStale = Bool()
         // Creating this URL implicitly applies the bookmark's security scope
         // See https://developer.apple.com/forums//thread/704971?answerId=711609022
-        _ = try URL(resolvingBookmarkData: clientBookmark, bookmarkDataIsStale: &isStale)
+        if #available(macOS 11.2, *) {
+            let url = try URL(resolvingBookmarkData: clientBookmark, options: .withoutImplicitStartAccessing, bookmarkDataIsStale: &isStale)
+            if !FileManager.default.isWritableFile(atPath: url.path) {
+                _ = url.startAccessingSecurityScopedResource()
+            }
+        } else {
+            let _ = try URL(resolvingBookmarkData: clientBookmark, bookmarkDataIsStale: &isStale)
+        }
     }
 }
